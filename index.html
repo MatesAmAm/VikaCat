@@ -23,6 +23,21 @@
       margin: 20px 0 10px;
       user-select: none;
     }
+    #catcoins {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border: 2px solid #ccc;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 16px;
+      color: #444;
+      font-weight: 500;
+      z-index: 10000;
+      user-select: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
     .card {
       width: 320px;
       height: 320px;
@@ -106,13 +121,28 @@
       z-index: 9999;
       user-select: none;
     }
+    #favorites-modal .fav-img-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
     #favorites-modal img {
       max-width: 90vw;
       max-height: 280px;
-      margin: 10px 0;
       border-radius: 12px;
       box-shadow: 0 0 12px rgba(0,0,0,0.12);
       user-select: none;
+    }
+    .download-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 4px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
     }
     #close-modal {
       background: none;
@@ -128,7 +158,6 @@
       color: #555;
       outline: none;
     }
-    /* Минималистичная кнопка музыки слева сверху */
     #toggle-music {
       position: fixed;
       top: 12px;
@@ -154,13 +183,13 @@
 <body>
   <h1>Свайп-котики 😺</h1>
 
-  <!-- Фоновая музыка -->
+  <div id="catcoins">Кэткоины: <span id="coin-count">0</span></div>
+
   <audio id="bg-music" loop>
     <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3ffed329f7.mp3?filename=bensound-tenderness-10162.mp3" type="audio/mpeg" />
     Ваш браузер не поддерживает аудио.
   </audio>
 
-  <!-- Мурлыканье -->
   <audio id="purr-sound">
     <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_f0a64de44b.mp3?filename=cat-purr-6812.mp3" type="audio/mpeg" />
   </audio>
@@ -184,10 +213,15 @@
 
   <script>
     const likedCats = [];
+    let catCoins = 0;
+
+    function updateCoins() {
+      catCoins += 1;
+      document.getElementById('coin-count').textContent = catCoins;
+    }
 
     async function fetchRandomCat() {
-      const url = `https://cataas.com/cat?${Date.now()}`;
-      return url;
+      return `https://cataas.com/cat?${Date.now()}`;
     }
 
     async function nextCat() {
@@ -198,6 +232,7 @@
         img.src = url;
         img.style.opacity = 1;
       }, 300);
+      updateCoins();
     }
 
     function likeCat() {
@@ -218,14 +253,25 @@
       if (likedCats.length === 0) {
         container.textContent = 'Пока нет избранных котиков.';
       } else {
-        likedCats.forEach((url) => {
+        likedCats.forEach(url => {
+          const wrapper = document.createElement('div');
+          wrapper.classList.add('fav-img-container');
+
           const img = document.createElement('img');
           img.src = url;
-          container.appendChild(img);
+
+          const download = document.createElement('a');
+          download.href = url;
+          download.download = 'cat.jpg';
+          download.className = 'download-btn';
+          download.textContent = 'Скачать';
+
+          wrapper.appendChild(img);
+          wrapper.appendChild(download);
+          container.appendChild(wrapper);
         });
       }
       modal.style.display = 'flex';
-      // Для доступности можно поставить фокус на кнопку закрытия
       document.getElementById('close-modal').focus();
     }
 
@@ -245,18 +291,13 @@
       }
     }
 
-    // Воспроизводим музыку только после первого пользовательского взаимодействия
-    document.addEventListener(
-      'click',
-      () => {
-        const music = document.getElementById('bg-music');
-        if (music.paused) {
-          music.play();
-          document.getElementById('toggle-music').setAttribute('aria-pressed', 'true');
-        }
-      },
-      { once: true }
-    );
+    document.addEventListener('click', () => {
+      const music = document.getElementById('bg-music');
+      if (music.paused) {
+        music.play();
+        document.getElementById('toggle-music').setAttribute('aria-pressed', 'true');
+      }
+    }, { once: true });
 
     nextCat();
   </script>
