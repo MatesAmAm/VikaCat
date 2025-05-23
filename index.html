@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Свайп-котики</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #fff;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+      font-weight: 400;
+      margin: 20px 0 10px;
+      user-select: none;
+    }
+    .card {
+      width: 320px;
+      height: 320px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      user-select: none;
+      background: #fefefe;
+    }
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      user-select: none;
+    }
+    .buttons {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      background: none;
+      border: 2px solid #aaa;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      color: #555;
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+      user-select: none;
+      min-width: 100px;
+    }
+    button:hover, button:focus {
+      background-color: #f0f0f0;
+      border-color: #888;
+      color: #333;
+      outline: none;
+    }
+    .like {
+      border-color: #27ae60;
+      color: #27ae60;
+    }
+    .like:hover, .like:focus {
+      background-color: #d4efdf;
+      border-color: #27ae60;
+      color: #1e8449;
+    }
+    .dislike {
+      border-color: #e74c3c;
+      color: #e74c3c;
+    }
+    .dislike:hover, .dislike:focus {
+      background-color: #f9d6d5;
+      border-color: #e74c3c;
+      color: #b93227;
+    }
+    .view-favorites {
+      border-color: #2980b9;
+      color: #2980b9;
+    }
+    .view-favorites:hover, .view-favorites:focus {
+      background-color: #d4e6f1;
+      border-color: #2980b9;
+      color: #1f5c87;
+    }
+    #favorites-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 20px 20px;
+      overflow-y: auto;
+      z-index: 9999;
+      user-select: none;
+    }
+    #favorites-modal img {
+      max-width: 90vw;
+      max-height: 280px;
+      margin: 10px 0;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
+      user-select: none;
+    }
+    #close-modal {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #888;
+      margin-bottom: 20px;
+      align-self: flex-end;
+      user-select: none;
+    }
+    #close-modal:hover, #close-modal:focus {
+      color: #555;
+      outline: none;
+    }
+    /* Минималистичная кнопка музыки слева сверху */
+    #toggle-music {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      background: none;
+      border: 2px solid #aaa;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+      padding: 6px 12px;
+      border-radius: 10px;
+      transition: color 0.25s ease, border-color 0.25s ease;
+      user-select: none;
+      z-index: 10000;
+    }
+    #toggle-music:hover, #toggle-music:focus {
+      color: #000;
+      border-color: #444;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Свайп-котики 😺</h1>
+
+  <!-- Фоновая музыка -->
+  <audio id="bg-music" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3ffed329f7.mp3?filename=bensound-tenderness-10162.mp3" type="audio/mpeg" />
+    Ваш браузер не поддерживает аудио.
+  </audio>
+
+  <!-- Мурлыканье -->
+  <audio id="purr-sound">
+    <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_f0a64de44b.mp3?filename=cat-purr-6812.mp3" type="audio/mpeg" />
+  </audio>
+
+  <div class="card" id="cat-card">
+    <img id="cat-image" src="https://cataas.com/cat" alt="Котик" />
+  </div>
+
+  <div class="buttons" role="group" aria-label="Кнопки управления">
+    <button class="dislike" onclick="nextCat()" aria-label="Нет">👎 Нет</button>
+    <button class="like" onclick="likeCat()" aria-label="Да">👍 Да</button>
+    <button class="view-favorites" onclick="showFavorites()" aria-label="Показать избранное">⭐ Избранное</button>
+  </div>
+
+  <button id="toggle-music" onclick="toggleMusic()" title="Включить/выключить музыку" aria-pressed="false">🎵</button>
+
+  <div id="favorites-modal" role="dialog" aria-modal="true" aria-labelledby="favorites-title">
+    <button id="close-modal" onclick="closeFavorites()" aria-label="Закрыть окно избранного">✖</button>
+    <div id="favorites-container"></div>
+  </div>
+
+  <script>
+    const likedCats = [];
+
+    async function fetchRandomCat() {
+      const url = `https://cataas.com/cat?${Date.now()}`;
+      return url;
+    }
+
+    async function nextCat() {
+      const img = document.getElementById('cat-image');
+      img.style.opacity = 0;
+      const url = await fetchRandomCat();
+      setTimeout(() => {
+        img.src = url;
+        img.style.opacity = 1;
+      }, 300);
+    }
+
+    function likeCat() {
+      const img = document.getElementById('cat-image');
+      likedCats.push(img.src);
+
+      const purr = document.getElementById('purr-sound');
+      purr.currentTime = 0;
+      purr.play();
+
+      nextCat();
+    }
+
+    function showFavorites() {
+      const modal = document.getElementById('favorites-modal');
+      const container = document.getElementById('favorites-container');
+      container.innerHTML = '';
+      if (likedCats.length === 0) {
+        container.textContent = 'Пока нет избранных котиков.';
+      } else {
+        likedCats.forEach((url) => {
+          const img = document.createElement('img');
+          img.src = url;
+          container.appendChild(img);
+        });
+      }
+      modal.style.display = 'flex';
+      // Для доступности можно поставить фокус на кнопку закрытия
+      document.getElementById('close-modal').focus();
+    }
+
+    function closeFavorites() {
+      document.getElementById('favorites-modal').style.display = 'none';
+    }
+
+    function toggleMusic() {
+      const music = document.getElementById('bg-music');
+      const btn = document.getElementById('toggle-music');
+      if (music.paused) {
+        music.play();
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        music.pause();
+        btn.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    // Воспроизводим музыку только после первого пользовательского взаимодействия
+    document.addEventListener(
+      'click',
+      () => {
+        const music = document.getElementById('bg-music');
+        if (music.paused) {
+          music.play();
+          document.getElementById('toggle-music').setAttribute('aria-pressed', 'true');
+        }
+      },
+      { once: true }
+    );
+
+    nextCat();
+  </script>
+</body>
+</html>
